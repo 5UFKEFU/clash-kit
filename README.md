@@ -55,6 +55,86 @@ make build
 - `no_libproc`：避免 libproc.h 依赖
 - `ios_cpu`：使用自定义 CPU 信息实现
 
+## iOS 应用集成
+
+### 1. 添加文件到项目
+
+将 `target/ios` 目录下的以下文件添加到您的 Xcode 项目中：
+- `ClashKit.objc.h`
+- `ClashKit.objc.m`
+- `ClashKit.a`
+
+### 2. 配置项目设置
+
+1. 在 Xcode 项目设置中：
+   - 将 `ClashKit.a` 添加到 "Link Binary With Libraries"
+   - 在 "Build Settings" 中设置 "Enable Bitcode" 为 No
+   - 在 "Build Settings" 中设置 "Valid Architectures" 包含 arm64 和 x86_64
+
+2. 在项目的 Bridging Header 中添加：
+```objc
+#import "ClashKit.objc.h"
+```
+
+### 3. 使用示例
+
+```swift
+import Foundation
+
+class ClashManager {
+    private let clash: ClashKitClash
+    
+    init() {
+        clash = ClashKitClash()
+    }
+    
+    func setup(homeDir: String, config: String) {
+        // 设置 Clash
+        clash.setup(withHomeDir: homeDir, config: config)
+    }
+    
+    func getConfigGeneral() -> [String: Any]? {
+        // 获取配置
+        if let data = clash.getConfigGeneral() {
+            return try? JSONSerialization.jsonObject(with: data) as? [String: Any]
+        }
+        return nil
+    }
+    
+    func patchSelector(mapping: [String: String]) -> Bool {
+        // 更新选择器
+        if let data = try? JSONSerialization.data(withJSONObject: mapping) {
+            return clash.patchSelector(with: data)
+        }
+        return false
+    }
+}
+
+// 使用示例
+let manager = ClashManager()
+manager.setup(homeDir: "/path/to/home", config: "your_config_content")
+```
+
+### 4. 注意事项
+
+1. 确保在 Info.plist 中添加必要的权限：
+```xml
+<key>NSAppTransportSecurity</key>
+<dict>
+    <key>NSAllowsArbitraryLoads</key>
+    <true/>
+</dict>
+```
+
+2. 如果需要使用网络扩展功能，需要：
+   - 添加 Network Extension 能力
+   - 在 Capabilities 中启用 Network Extensions
+   - 配置相应的 App Groups
+
+3. 内存管理：
+   - ClashKit 对象会在 Swift 中自动管理内存
+   - 不需要手动调用 release 或 dealloc
+
 ## 项目结构
 
 ```
@@ -97,6 +177,13 @@ go clean -modcache
 go install golang.org/x/mobile/cmd/gomobile@latest
 gomobile init
 ```
+
+### 3. iOS 集成问题
+
+如果遇到链接错误，请检查：
+- 是否正确添加了所有必要的文件
+- 是否正确配置了项目设置
+- 是否添加了必要的权限声明
 
 ## 许可证
 
