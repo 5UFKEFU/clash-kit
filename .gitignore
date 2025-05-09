@@ -28,6 +28,9 @@ go.work
 ### Go Patch ###
 /vendor/
 /Godeps/
-/target/
 
 # End of https://www.toptal.com/developers/gitignore/api/go
+*.gitignore
+*.git
+._clash
+._*
